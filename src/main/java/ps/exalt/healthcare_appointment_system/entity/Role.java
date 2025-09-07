@@ -1,7 +1,6 @@
 package ps.exalt.healthcare_appointment_system.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +22,6 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "Role name is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "name", nullable = false, unique = true, length = 20)
     private UserRole name;
