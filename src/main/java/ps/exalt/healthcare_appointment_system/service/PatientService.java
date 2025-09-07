@@ -51,7 +51,7 @@ public class PatientService {
         return convertToPatientResponse(savedPatient);
     }
 
-    public PatientResponse updatePatientDetails(Long patientId, PatientUpdateRequest request) {
+    public PatientResponse updatePatient(Long patientId, PatientUpdateRequest request) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
 
@@ -85,10 +85,6 @@ public class PatientService {
         return convertToPatientResponse(savedPatient);
     }
 
-    public PatientResponse updatePatient(Long patientId, PatientUpdateRequest request) {
-        return updatePatientDetails(patientId, request);
-    }
-
     public void removePatient(Long patientId) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
@@ -107,14 +103,6 @@ public class PatientService {
     public PatientResponse getPatientById(Long patientId) {
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
-
-        return convertToPatientResponse(patient);
-    }
-
-    @Transactional(readOnly = true)
-    public PatientResponse getPatientByUserId(Long userId) {
-        Patient patient = patientRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new NotFoundException("Patient not found with user ID: " + userId));
 
         return convertToPatientResponse(patient);
     }
