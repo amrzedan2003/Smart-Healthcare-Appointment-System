@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import ps.exalt.healthcare_appointment_system.enums.DoctorStatus;
 import ps.exalt.healthcare_appointment_system.enums.Gender;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -36,7 +36,7 @@ public class DoctorUpdateRequest {
     private String phoneNumber;
 
     @Past(message = "Date of birth must be in the past")
-    private LocalDateTime dateOfBirth;
+    private LocalDate dateOfBirth;
 
     private Gender gender;
 
