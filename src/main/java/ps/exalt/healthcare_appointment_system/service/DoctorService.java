@@ -1,6 +1,7 @@
 package ps.exalt.healthcare_appointment_system.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ps.exalt.healthcare_appointment_system.dto.request.DoctorCreateRequest;
@@ -100,6 +101,7 @@ public class DoctorService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "doctors", key = "'specialty_' + #specialty")
     public List<DoctorSearchResponse> searchDoctorsBySpecialty(String specialty) {
         List<Doctor> doctors = doctorRepository.findBySpecialization(specialty);
 
@@ -110,6 +112,7 @@ public class DoctorService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "doctors", key = "'active_doctors'")
     public List<DoctorSearchResponse> getAllActiveDoctors() {
         List<Doctor> doctors = doctorRepository.findByStatus(DoctorStatus.ACTIVE);
 
@@ -128,6 +131,7 @@ public class DoctorService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "doctors", key = "#doctorId")
     public DoctorResponse getDoctorById(Long doctorId) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
@@ -147,6 +151,7 @@ public class DoctorService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "doctors", key = "'specialties'")
     public List<String> getAllSpecialties() {
         return doctorRepository.findAll().stream()
                 .filter(doctor -> doctor.getStatus() == DoctorStatus.ACTIVE)
