@@ -25,10 +25,14 @@ public class GlobalExceptionHandler {
                 return buildErrorResponse(HttpStatus.CONFLICT, "Duplicate Resource", ex.getMessage(), request);
         }
 
-        @ExceptionHandler({ InvalidException.class, IllegalStateException.class })
+        @ExceptionHandler(InvalidException.class)
+        public ResponseEntity<ErrorResponse> handleInvalidException(InvalidException ex, WebRequest request) {
+                return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Authentication Failed", ex.getMessage(), request);
+        }
+
+        @ExceptionHandler({ IllegalStateException.class })
         public ResponseEntity<ErrorResponse> handleBadRequestExceptions(RuntimeException ex, WebRequest request) {
-                String error = ex instanceof InvalidException ? "Invalid Operation" : "Illegal State";
-                return buildErrorResponse(HttpStatus.BAD_REQUEST, error, ex.getMessage(), request);
+                return buildErrorResponse(HttpStatus.BAD_REQUEST, "Illegal State", ex.getMessage(), request);
         }
 
         @ExceptionHandler(MethodArgumentNotValidException.class)
