@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import ps.exalt.healthcare_appointment_system.enums.Gender;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -18,7 +19,7 @@ public class UserResponse {
     private String lastName;
     private String email;
     private String phoneNumber;
-    private LocalDateTime dateOfBirth;
+    private LocalDate dateOfBirth;
     private Gender gender;
     private String address;
     private String roleName;
