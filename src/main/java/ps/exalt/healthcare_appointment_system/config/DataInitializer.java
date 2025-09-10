@@ -4,13 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import ps.exalt.healthcare_appointment_system.entity.Doctor;
+import ps.exalt.healthcare_appointment_system.entity.DoctorWorkingTimeSlot;
 import ps.exalt.healthcare_appointment_system.entity.Role;
 import ps.exalt.healthcare_appointment_system.entity.User;
 import ps.exalt.healthcare_appointment_system.enums.Gender;
 import ps.exalt.healthcare_appointment_system.enums.UserRole;
 import ps.exalt.healthcare_appointment_system.exception.NotFoundException;
+import ps.exalt.healthcare_appointment_system.repository.jpa.DoctorRepository;
+import ps.exalt.healthcare_appointment_system.repository.jpa.DoctorWorkingTimeSlotRepository;
 import ps.exalt.healthcare_appointment_system.repository.jpa.RoleRepository;
 import ps.exalt.healthcare_appointment_system.repository.jpa.UserRepository;
+
+import java.time.DayOfWeek;
+import java.time.LocalTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -19,11 +27,14 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DoctorRepository doctorRepository;
+    private final DoctorWorkingTimeSlotRepository doctorWorkingTimeSlotRepository;
 
     @Override
     public void run(String... args) throws Exception {
         initializeRoles();
         initializeUsers();
+        initializeDefaultWorkingTimeSlots();
     }
 
     private void initializeRoles() {
@@ -56,5 +67,37 @@ public class DataInitializer implements CommandLineRunner {
 
             userRepository.save(admin);
         }
+    }
+
+    private void initializeDefaultWorkingTimeSlots() {
+        // Set default working time slots for all doctors who don't have time slots set
+        List<Doctor> doctors = doctorRepository.findAll();
+
+        for (Doctor doctor : doctors) {
+            List<DoctorWorkingTimeSlot> existingSlots = doctorWorkingTimeSlotRepository
+                    .findByDoctorIdOrderByDayOfWeekAscStartTimeAsc(doctor.getId());
+
+            if (existingSlots.isEmpty()) {
+                // Create default working time slots (SUNDAY to THURSDAY, 9 AM to 5 PM)
+                List<DoctorWorkingTimeSlot> defaultSlots = List.of(
+                        createWorkingTimeSlot(doctor, DayOfWeek.SUNDAY),
+                        createWorkingTimeSlot(doctor, DayOfWeek.MONDAY),
+                        createWorkingTimeSlot(doctor, DayOfWeek.TUESDAY),
+                        createWorkingTimeSlot(doctor, DayOfWeek.WEDNESDAY),
+                        createWorkingTimeSlot(doctor, DayOfWeek.THURSDAY));
+
+                doctorWorkingTimeSlotRepository.saveAll(defaultSlots);
+            }
+        }
+    }
+
+    private DoctorWorkingTimeSlot createWorkingTimeSlot(Doctor doctor, DayOfWeek dayOfWeek) {
+        return DoctorWorkingTimeSlot.builder()
+                .doctor(doctor)
+                .dayOfWeek(dayOfWeek)
+                .startTime(LocalTime.of(9, 0))
+                .endTime(LocalTime.of(17, 0))
+                .isActive(true)
+                .build();
     }
 }
