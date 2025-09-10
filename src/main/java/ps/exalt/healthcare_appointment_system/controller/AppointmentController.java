@@ -86,11 +86,26 @@ public class AppointmentController {
     }
 
     /**
-     * GET /api/appointments/{appointmentId}
+     * GET /api/appointments/{appointmentId}/patient/{patientId}
+     * Get appointment details for a patient
      */
-    @GetMapping("/{appointmentId}")
-    public ResponseEntity<AppointmentResponse> getAppointmentById(@PathVariable Long appointmentId) {
-        AppointmentResponse appointment = appointmentService.getAppointmentById(appointmentId);
+    @GetMapping("/{appointmentId}/patient/{patientId}")
+    public ResponseEntity<AppointmentResponse> getAppointmentByIdForPatient(
+            @PathVariable Long appointmentId,
+            @PathVariable Long patientId) {
+        AppointmentResponse appointment = appointmentService.getAppointmentByIdForPatient(appointmentId, patientId);
+        return ResponseEntity.ok(appointment);
+    }
+
+    /**
+     * GET /api/appointments/{appointmentId}/doctor/{doctorId}
+     * Get appointment details for a doctor
+     */
+    @GetMapping("/{appointmentId}/doctor/{doctorId}")
+    public ResponseEntity<AppointmentResponse> getAppointmentByIdForDoctor(
+            @PathVariable Long appointmentId,
+            @PathVariable Long doctorId) {
+        AppointmentResponse appointment = appointmentService.getAppointmentByIdForDoctor(appointmentId, doctorId);
         return ResponseEntity.ok(appointment);
     }
 }
