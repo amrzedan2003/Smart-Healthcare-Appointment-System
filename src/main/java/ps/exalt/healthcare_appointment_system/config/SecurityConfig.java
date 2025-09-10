@@ -61,10 +61,13 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/appointments/slots/**")
                                                 .hasAnyRole("PATIENT", "DOCTOR")
 
+                                                // Doctor endpoints -- Time slots management (doctors can manage their
+                                                // own schedules)
+                                                .requestMatchers("/api/doctors/*/time-slots/**")
+                                                .hasAnyRole("DOCTOR")
+
                                                 // Admin endpoints -- Doctor management
                                                 .requestMatchers("/api/doctors/**").hasRole("ADMIN")
-
-                                                // Admin endpoints -- Patient management
                                                 .requestMatchers("/api/patients/**").hasRole("ADMIN")
 
                                                 // All other requests need authentication
