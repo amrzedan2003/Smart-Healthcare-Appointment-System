@@ -142,7 +142,7 @@ public class DoctorService {
     @Transactional(readOnly = true)
     public List<DoctorSearchResponse> searchDoctorsByName(String firstName, String lastName) {
         List<Doctor> doctors = doctorRepository
-                .findByUser_FirstNameContainingIgnoreCaseOrUser_LastNameContainingIgnoreCase(firstName, lastName);
+                .findByUserFirstNameContainingIgnoreCaseOrUserLastNameContainingIgnoreCase(firstName, lastName);
 
         return doctors.stream()
                 .filter(doctor -> doctor.getStatus() == DoctorStatus.ACTIVE)

@@ -102,7 +102,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserResponse> findUsersByRole(UserRole role) {
-        List<User> users = userRepository.findByRole_Name(role);
+        List<User> users = userRepository.findByRoleName(role);
         return users.stream()
                 .map(this::convertToUserResponse)
                 .collect(Collectors.toList());
