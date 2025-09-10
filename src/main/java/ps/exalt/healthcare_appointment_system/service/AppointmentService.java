@@ -1,6 +1,8 @@
 package ps.exalt.healthcare_appointment_system.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ps.exalt.healthcare_appointment_system.dto.request.AppointmentBookRequest;
@@ -37,7 +39,24 @@ public class AppointmentService {
 
     private static final Integer SLOT_DURATION = 30; // 30 minutes
 
+    private void validatePatientAccess(Long patientId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String authenticatedEmail = authentication.getName();
+
+        // verify the patient belongs to the authenticated user
+        Patient patient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
+
+        if (!patient.getUser().getEmail().equals(authenticatedEmail)) {
+            throw new InvalidException("You can only manage your own appointments!");
+        }
+    }
+
     public AppointmentResponse bookAppointment(Long patientId, AppointmentBookRequest request) {
+        // Validate patient access authorization
+        validatePatientAccess(patientId);
+
         // Input validation
         if (patientId == null || patientId <= 0) {
             throw new InvalidException("Invalid patient ID provided");
@@ -127,6 +146,9 @@ public class AppointmentService {
     }
 
     public void cancelAppointment(Long patientId, Long appointmentId) {
+        // Validate patient access authorization
+        validatePatientAccess(patientId);
+
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found with ID: " + appointmentId));
 
@@ -240,6 +262,9 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getPatientAppointments(Long patientId) {
+        // Validate patient access authorization
+        validatePatientAccess(patientId);
+
         // Validate patient exists
         patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
@@ -264,6 +289,9 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public AppointmentResponse getAppointmentByIdForPatient(Long appointmentId, Long patientId) {
+        // Validate patient access authorization
+        validatePatientAccess(patientId);
+
         // Validate patient exists
         patientRepository.findById(patientId)
                 .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
