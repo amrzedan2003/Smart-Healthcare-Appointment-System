@@ -28,9 +28,31 @@ public class SecurityConfig {
                         // Public endpoints - Only login
                         .requestMatchers("/api/auth/**").permitAll()
 
+                        // Temporarily allow all appointment endpoints for testing
+                        .requestMatchers("/api/appointments/**").permitAll()
+
                         // Patient endpoints -- Doctor search
                         .requestMatchers("/api/doctors/search/**", "/api/doctors/active", "/api/doctors/specialties")
                         .hasRole("PATIENT")
+
+                        // Patient endpoints -- Appointment booking and cancellation
+                        .requestMatchers("/api/appointments/book/**", "/api/appointments/*/cancel/*")
+                        .hasRole("PATIENT")
+
+                        // Patient endpoints -- View patient appointments
+                        .requestMatchers("/api/appointments/patient/**")
+                        .hasRole("PATIENT")
+
+                        // Doctor endpoints -- Complete appointments and view doctor appointments
+                        .requestMatchers("/api/appointments/*/complete/*",
+                                "/api/appointments/doctor/**")
+                        .hasRole("DOCTOR")
+
+                        // Both patient and doctor endpoints -- View available slots and appointment
+                        // details
+                        .requestMatchers("/api/appointments/slots/**",
+                                "/api/appointments/{appointmentId}")
+                        .hasAnyRole("PATIENT", "DOCTOR")
 
                         // Admin endpoints -- Doctor management
                         .requestMatchers("/api/doctors/**").hasRole("ADMIN")

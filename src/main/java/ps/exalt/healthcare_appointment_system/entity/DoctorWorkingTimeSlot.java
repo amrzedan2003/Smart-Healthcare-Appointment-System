@@ -8,57 +8,42 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import ps.exalt.healthcare_appointment_system.enums.AppointmentStatus;
 
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "appointments")
+@Table(name = "doctor_working_time_slots")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Appointment {
+public class DoctorWorkingTimeSlot {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient_id", nullable = false)
-    private Patient patient;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
-    @NotNull(message = "Appointment date is required")
-    @Column(name = "appointment_date", nullable = false)
-    private LocalDateTime appointmentDate;
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Day of week is required")
+    @Column(name = "day_of_week", nullable = false)
+    private DayOfWeek dayOfWeek;
 
     @NotNull(message = "Start time is required")
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private LocalTime startTime;
 
     @NotNull(message = "End time is required")
     @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    private LocalTime endTime;
 
-    @Column(name = "duration_minutes", nullable = false)
-    private Integer durationMinutes;
-
-    @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(name = "status", nullable = false)
-    private AppointmentStatus status = AppointmentStatus.SCHEDULED;
-
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
-
-    @Column(name = "cancelled_at")
-    private LocalDateTime cancelledAt;
-
-    @Column(name = "completed_at")
-    private LocalDateTime completedAt;
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -109,7 +109,7 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public PatientResponse getPatientByEmail(String email) {
-        Patient patient = patientRepository.findByUser_Email(email)
+        Patient patient = patientRepository.findByUserEmail(email)
                 .orElseThrow(() -> new NotFoundException("Patient not found with email: " + email));
 
         return convertToPatientResponse(patient);
@@ -127,7 +127,7 @@ public class PatientService {
     @Transactional(readOnly = true)
     public List<PatientResponse> searchPatientsByName(String firstName, String lastName) {
         List<Patient> patients = patientRepository
-                .findByUser_FirstNameContainingIgnoreCaseOrUser_LastNameContainingIgnoreCase(firstName, lastName);
+                .findByUserFirstNameContainingIgnoreCaseOrUserLastNameContainingIgnoreCase(firstName, lastName);
 
         return patients.stream()
                 .map(this::convertToPatientResponse)
@@ -136,12 +136,12 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
-        return patientRepository.existsByUser_Email(email);
+        return patientRepository.existsByUserEmail(email);
     }
 
     @Transactional(readOnly = true)
     public boolean existsByUserId(Long userId) {
-        return patientRepository.existsByUser_Id(userId);
+        return patientRepository.existsByUserId(userId);
     }
 
     private PatientResponse convertToPatientResponse(Patient patient) {
