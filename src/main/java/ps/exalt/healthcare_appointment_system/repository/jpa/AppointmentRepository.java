@@ -31,6 +31,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                         @Param("startTime") LocalDateTime startTime,
                         @Param("endTime") LocalDateTime endTime);
 
+        // Check for overlapping appointments for a patient (prevent patient
+        // double-booking)
+        @Query("SELECT a FROM Appointment a WHERE a.patient.id = :patientId " +
+                        "AND (a.status = 'SCHEDULED' OR a.status = 'IN_PROGRESS') " +
+                        "AND ((a.startTime < :endTime AND a.endTime > :startTime))")
+        List<Appointment> findOverlappingPatientAppointments(@Param("patientId") Long patientId,
+                        @Param("startTime") LocalDateTime startTime,
+                        @Param("endTime") LocalDateTime endTime);
+
         // Get all active appointments for a doctor on a specific date
         @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId " +
                         "AND DATE(a.appointmentDate) = DATE(:date) " +

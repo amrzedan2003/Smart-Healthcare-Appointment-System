@@ -43,17 +43,22 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/appointments/patient/**")
                                                 .hasRole("PATIENT")
 
+                                                // Patient endpoints -- View appointment details for patients
+                                                .requestMatchers("/api/appointments/*/patient/*")
+                                                .hasRole("PATIENT")
+
                                                 // Doctor endpoints -- Complete appointments and view doctor
                                                 // appointments
                                                 .requestMatchers("/api/appointments/*/complete/*",
                                                                 "/api/appointments/doctor/**")
                                                 .hasRole("DOCTOR")
 
-                                                // Both patient and doctor endpoints -- View available slots and
-                                                // appointment
-                                                // details
-                                                .requestMatchers("/api/appointments/slots/**",
-                                                                "/api/appointments/{appointmentId}")
+                                                // Doctor endpoints -- View appointment details for doctors
+                                                .requestMatchers("/api/appointments/*/doctor/*")
+                                                .hasRole("DOCTOR")
+
+                                                // Both patient and doctor endpoints -- View available slots
+                                                .requestMatchers("/api/appointments/slots/**")
                                                 .hasAnyRole("PATIENT", "DOCTOR")
 
                                                 // Admin endpoints -- Doctor management
