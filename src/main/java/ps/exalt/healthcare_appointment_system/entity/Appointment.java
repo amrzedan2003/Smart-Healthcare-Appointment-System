@@ -54,9 +54,6 @@ public class Appointment {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "cancelled_by")
-    private Long cancelledBy;
-
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
@@ -70,21 +67,4 @@ public class Appointment {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    /**
-     * Automatically sets start and end times based on appointment date and duration
-     */
-    @PrePersist
-    @PreUpdate
-    public void calculateTimes() {
-        this.startTime = appointmentDate;
-        this.endTime = appointmentDate.plusMinutes(durationMinutes);
-    }
-
-    /**
-     * Check if this appointment overlaps with another appointment time slot
-     */
-    public boolean overlapsWith(LocalDateTime otherStart, LocalDateTime otherEnd) {
-        return startTime.isBefore(otherEnd) && endTime.isAfter(otherStart);
-    }
 }
