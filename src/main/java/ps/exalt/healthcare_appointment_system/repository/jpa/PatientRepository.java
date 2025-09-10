@@ -9,14 +9,14 @@ import java.util.Optional;
 
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
-    Optional<Patient> findByUser_Id(Long userId);
+    Optional<Patient> findByUserId(Long userId);
 
-    List<Patient> findByUser_FirstNameContainingIgnoreCaseOrUser_LastNameContainingIgnoreCase(String firstName,
+    List<Patient> findByUserFirstNameContainingIgnoreCaseOrUserLastNameContainingIgnoreCase(String firstName,
             String lastName);
 
-    Optional<Patient> findByUser_Email(String email);
+    Optional<Patient> findByUserEmail(String email);
 
-    boolean existsByUser_Id(Long userId);
+    boolean existsByUserId(Long userId);
 
-    boolean existsByUser_Email(String email);
+    boolean existsByUserEmail(String email);
 }
