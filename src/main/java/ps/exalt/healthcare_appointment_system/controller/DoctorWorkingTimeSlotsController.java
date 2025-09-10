@@ -2,7 +2,6 @@ package ps.exalt.healthcare_appointment_system.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/doctors/{doctorId}/time-slots")
 @RequiredArgsConstructor
-@Slf4j
 @CrossOrigin(origins = "*")
 public class DoctorWorkingTimeSlotsController {
 
@@ -32,7 +30,6 @@ public class DoctorWorkingTimeSlotsController {
     public ResponseEntity<DoctorMultipleTimeSlotsResponse> setDoctorTimeSlots(
             @PathVariable Long doctorId,
             @Valid @RequestBody DoctorMultipleTimeSlotsRequest request) {
-        log.info("Setting multiple time slots for doctor ID: {} on {}", doctorId, request.getDayOfWeek());
         DoctorMultipleTimeSlotsResponse response = timeSlotsService.setDoctorTimeSlots(doctorId, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -46,8 +43,6 @@ public class DoctorWorkingTimeSlotsController {
             @PathVariable Long doctorId,
             @PathVariable DayOfWeek dayOfWeek,
             @Valid @RequestBody TimeSlotRequest request) {
-        log.info("Adding time slot for doctor ID: {} on {} from {} to {}",
-                doctorId, dayOfWeek, request.getStartTime(), request.getEndTime());
         DoctorMultipleTimeSlotsResponse response = timeSlotsService.addTimeSlot(doctorId, dayOfWeek, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
@@ -60,7 +55,6 @@ public class DoctorWorkingTimeSlotsController {
     public ResponseEntity<DoctorMultipleTimeSlotsResponse> getDoctorTimeSlots(
             @PathVariable Long doctorId,
             @PathVariable DayOfWeek dayOfWeek) {
-        log.info("Getting time slots for doctor ID: {} on {}", doctorId, dayOfWeek);
         DoctorMultipleTimeSlotsResponse response = timeSlotsService.getDoctorTimeSlots(doctorId, dayOfWeek);
         return ResponseEntity.ok(response);
     }
@@ -73,7 +67,6 @@ public class DoctorWorkingTimeSlotsController {
     public ResponseEntity<DoctorMultipleTimeSlotsResponse> getActiveDoctorTimeSlots(
             @PathVariable Long doctorId,
             @PathVariable DayOfWeek dayOfWeek) {
-        log.info("Getting active time slots for doctor ID: {} on {}", doctorId, dayOfWeek);
         DoctorMultipleTimeSlotsResponse response = timeSlotsService.getActiveDoctorTimeSlots(doctorId, dayOfWeek);
         return ResponseEntity.ok(response);
     }
@@ -84,7 +77,6 @@ public class DoctorWorkingTimeSlotsController {
      */
     @GetMapping
     public ResponseEntity<List<DoctorMultipleTimeSlotsResponse>> getAllDoctorTimeSlots(@PathVariable Long doctorId) {
-        log.info("Getting all time slots for doctor ID: {}", doctorId);
         List<DoctorMultipleTimeSlotsResponse> response = timeSlotsService.getAllDoctorTimeSlots(doctorId);
         return ResponseEntity.ok(response);
     }
@@ -96,7 +88,6 @@ public class DoctorWorkingTimeSlotsController {
     @GetMapping("/active")
     public ResponseEntity<List<DoctorMultipleTimeSlotsResponse>> getAllActiveDoctorTimeSlots(
             @PathVariable Long doctorId) {
-        log.info("Getting all active time slots for doctor ID: {}", doctorId);
         List<DoctorMultipleTimeSlotsResponse> response = timeSlotsService.getAllActiveDoctorTimeSlots(doctorId);
         return ResponseEntity.ok(response);
     }
@@ -110,7 +101,6 @@ public class DoctorWorkingTimeSlotsController {
             @PathVariable Long doctorId,
             @PathVariable Long slotId,
             @Valid @RequestBody TimeSlotRequest request) {
-        log.info("Updating time slot ID: {} for doctor ID: {}", slotId, doctorId);
         TimeSlotResponse response = timeSlotsService.updateTimeSlot(slotId, request);
         return ResponseEntity.ok(response);
     }
@@ -123,7 +113,6 @@ public class DoctorWorkingTimeSlotsController {
     public ResponseEntity<Void> deleteTimeSlot(
             @PathVariable Long doctorId,
             @PathVariable Long slotId) {
-        log.info("Deleting time slot ID: {} for doctor ID: {}", slotId, doctorId);
         timeSlotsService.deleteTimeSlot(slotId);
         return ResponseEntity.noContent().build();
     }
@@ -136,7 +125,6 @@ public class DoctorWorkingTimeSlotsController {
     public ResponseEntity<Void> deleteDoctorTimeSlots(
             @PathVariable Long doctorId,
             @PathVariable DayOfWeek dayOfWeek) {
-        log.info("Deleting all time slots for doctor ID: {} on {}", doctorId, dayOfWeek);
         timeSlotsService.deleteDoctorTimeSlots(doctorId, dayOfWeek);
         return ResponseEntity.noContent().build();
     }
