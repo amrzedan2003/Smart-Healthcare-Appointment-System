@@ -90,13 +90,23 @@ public class AppointmentService {
         LocalDateTime startTime = selectedSlot.getStartTime();
         LocalDateTime endTime = selectedSlot.getEndTime();
 
-        // Check for double-booking
-        List<Appointment> overlappingAppointments = appointmentRepository
+        // Check for doctor double-booking
+        List<Appointment> doctorOverlappingAppointments = appointmentRepository
                 .findOverlappingAppointments(request.getDoctorId(), startTime, endTime);
 
-        if (!overlappingAppointments.isEmpty()) {
+        if (!doctorOverlappingAppointments.isEmpty()) {
             throw new InvalidException(
                     "This time slot is no longer available. Please refresh and select another slot.");
+        }
+
+        // Check for patient double-booking (prevent patient from booking multiple
+        // appointments at the same time)
+        List<Appointment> patientOverlappingAppointments = appointmentRepository
+                .findOverlappingPatientAppointments(patientId, startTime, endTime);
+
+        if (!patientOverlappingAppointments.isEmpty()) {
+            throw new InvalidException(
+                    "You already have an appointment scheduled at this time. Please select a different time slot.");
         }
 
         // Create appointment
@@ -253,9 +263,35 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
-    public AppointmentResponse getAppointmentById(Long appointmentId) {
+    public AppointmentResponse getAppointmentByIdForPatient(Long appointmentId, Long patientId) {
+        // Validate patient exists
+        patientRepository.findById(patientId)
+                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
+
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found with ID: " + appointmentId));
+
+        // Check if the appointment belongs to the requesting patient
+        if (!appointment.getPatient().getId().equals(patientId)) {
+            throw new InvalidException("You can only view your own appointments.");
+        }
+
+        return convertToAppointmentResponse(appointment);
+    }
+
+    @Transactional(readOnly = true)
+    public AppointmentResponse getAppointmentByIdForDoctor(Long appointmentId, Long doctorId) {
+        // Validate doctor exists
+        doctorRepository.findById(doctorId)
+                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new NotFoundException("Appointment not found with ID: " + appointmentId));
+
+        // Check if the appointment belongs to the requesting doctor
+        if (!appointment.getDoctor().getId().equals(doctorId)) {
+            throw new InvalidException("You can only view your own appointments.");
+        }
 
         return convertToAppointmentResponse(appointment);
     }
