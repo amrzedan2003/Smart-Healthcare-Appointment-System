@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ps.exalt.healthcare_appointment_system.dto.request.DoctorMultipleTimeSlotsRequest;
 import ps.exalt.healthcare_appointment_system.dto.request.TimeSlotRequest;
@@ -15,7 +16,7 @@ import java.time.DayOfWeek;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/doctors/{doctorId}/time-slots")
+@RequestMapping("/api/doctors/time-slots")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class DoctorWorkingTimeSlotsController {
@@ -23,109 +24,115 @@ public class DoctorWorkingTimeSlotsController {
     private final DoctorWorkingTimeSlotsService timeSlotsService;
 
     /**
-     * POST /api/doctors/{doctorId}/time-slots
-     * Set multiple working time slots for a doctor on a specific day
+     * POST /api/doctors/time-slots
+     * Set multiple working time slots for authenticated doctor on a specific day
      */
     @PostMapping
     public ResponseEntity<DoctorMultipleTimeSlotsResponse> setDoctorTimeSlots(
-            @PathVariable Long doctorId,
-            @Valid @RequestBody DoctorMultipleTimeSlotsRequest request) {
-        DoctorMultipleTimeSlotsResponse response = timeSlotsService.setDoctorTimeSlots(doctorId, request);
+            @Valid @RequestBody DoctorMultipleTimeSlotsRequest request,
+            Authentication authentication) {
+        DoctorMultipleTimeSlotsResponse response = timeSlotsService.setDoctorTimeSlots(request,
+                authentication.getName());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     /**
-     * POST /api/doctors/{doctorId}/time-slots/{dayOfWeek}
-     * Add a single time slot for a doctor on a specific day
+     * POST /api/doctors/time-slots/{dayOfWeek}
+     * Add a single time slot for authenticated doctor on a specific day
      */
     @PostMapping("/{dayOfWeek}")
     public ResponseEntity<DoctorMultipleTimeSlotsResponse> addTimeSlot(
-            @PathVariable Long doctorId,
             @PathVariable DayOfWeek dayOfWeek,
-            @Valid @RequestBody TimeSlotRequest request) {
-        DoctorMultipleTimeSlotsResponse response = timeSlotsService.addTimeSlot(doctorId, dayOfWeek, request);
+            @Valid @RequestBody TimeSlotRequest request,
+            Authentication authentication) {
+        DoctorMultipleTimeSlotsResponse response = timeSlotsService.addTimeSlot(dayOfWeek, request,
+                authentication.getName());
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     /**
-     * GET /api/doctors/{doctorId}/time-slots/{dayOfWeek}
-     * Get all time slots for a doctor on a specific day
+     * GET /api/doctors/time-slots/{dayOfWeek}
+     * Get all time slots for authenticated doctor on a specific day
      */
     @GetMapping("/{dayOfWeek}")
     public ResponseEntity<DoctorMultipleTimeSlotsResponse> getDoctorTimeSlots(
-            @PathVariable Long doctorId,
-            @PathVariable DayOfWeek dayOfWeek) {
-        DoctorMultipleTimeSlotsResponse response = timeSlotsService.getDoctorTimeSlots(doctorId, dayOfWeek);
+            @PathVariable DayOfWeek dayOfWeek,
+            Authentication authentication) {
+        DoctorMultipleTimeSlotsResponse response = timeSlotsService.getDoctorTimeSlots(dayOfWeek,
+                authentication.getName());
         return ResponseEntity.ok(response);
     }
 
     /**
-     * GET /api/doctors/{doctorId}/time-slots/{dayOfWeek}/active
-     * Get only active time slots for a doctor on a specific day
+     * GET /api/doctors/time-slots/{dayOfWeek}/active
+     * Get only active time slots for authenticated doctor on a specific day
      */
     @GetMapping("/{dayOfWeek}/active")
     public ResponseEntity<DoctorMultipleTimeSlotsResponse> getActiveDoctorTimeSlots(
-            @PathVariable Long doctorId,
-            @PathVariable DayOfWeek dayOfWeek) {
-        DoctorMultipleTimeSlotsResponse response = timeSlotsService.getActiveDoctorTimeSlots(doctorId, dayOfWeek);
+            @PathVariable DayOfWeek dayOfWeek,
+            Authentication authentication) {
+        DoctorMultipleTimeSlotsResponse response = timeSlotsService.getActiveDoctorTimeSlots(dayOfWeek,
+                authentication.getName());
         return ResponseEntity.ok(response);
     }
 
     /**
-     * GET /api/doctors/{doctorId}/time-slots
-     * Get all time slots for a doctor (all days)
+     * GET /api/doctors/time-slots
+     * Get all time slots for authenticated doctor (all days)
      */
     @GetMapping
-    public ResponseEntity<List<DoctorMultipleTimeSlotsResponse>> getAllDoctorTimeSlots(@PathVariable Long doctorId) {
-        List<DoctorMultipleTimeSlotsResponse> response = timeSlotsService.getAllDoctorTimeSlots(doctorId);
+    public ResponseEntity<List<DoctorMultipleTimeSlotsResponse>> getAllDoctorTimeSlots(Authentication authentication) {
+        List<DoctorMultipleTimeSlotsResponse> response = timeSlotsService
+                .getAllDoctorTimeSlots(authentication.getName());
         return ResponseEntity.ok(response);
     }
 
     /**
-     * GET /api/doctors/{doctorId}/time-slots/active
-     * Get all active time slots for a doctor (all days)
+     * GET /api/doctors/time-slots/active
+     * Get all active time slots for authenticated doctor (all days)
      */
     @GetMapping("/active")
     public ResponseEntity<List<DoctorMultipleTimeSlotsResponse>> getAllActiveDoctorTimeSlots(
-            @PathVariable Long doctorId) {
-        List<DoctorMultipleTimeSlotsResponse> response = timeSlotsService.getAllActiveDoctorTimeSlots(doctorId);
+            Authentication authentication) {
+        List<DoctorMultipleTimeSlotsResponse> response = timeSlotsService
+                .getAllActiveDoctorTimeSlots(authentication.getName());
         return ResponseEntity.ok(response);
     }
 
     /**
-     * PUT /api/doctors/{doctorId}/time-slots/slot/{slotId}
+     * PUT /api/doctors/time-slots/slot/{slotId}
      * Update a specific time slot
      */
     @PutMapping("/slot/{slotId}")
     public ResponseEntity<TimeSlotResponse> updateTimeSlot(
-            @PathVariable Long doctorId,
             @PathVariable Long slotId,
-            @Valid @RequestBody TimeSlotRequest request) {
-        TimeSlotResponse response = timeSlotsService.updateTimeSlot(slotId, request);
+            @Valid @RequestBody TimeSlotRequest request,
+            Authentication authentication) {
+        TimeSlotResponse response = timeSlotsService.updateTimeSlot(slotId, request, authentication.getName());
         return ResponseEntity.ok(response);
     }
 
     /**
-     * DELETE /api/doctors/{doctorId}/time-slots/slot/{slotId}
+     * DELETE /api/doctors/time-slots/slot/{slotId}
      * Delete a specific time slot
      */
     @DeleteMapping("/slot/{slotId}")
     public ResponseEntity<Void> deleteTimeSlot(
-            @PathVariable Long doctorId,
-            @PathVariable Long slotId) {
-        timeSlotsService.deleteTimeSlot(slotId);
+            @PathVariable Long slotId,
+            Authentication authentication) {
+        timeSlotsService.deleteTimeSlot(slotId, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * DELETE /api/doctors/{doctorId}/time-slots/{dayOfWeek}
-     * Delete all time slots for a doctor on a specific day
+     * DELETE /api/doctors/time-slots/{dayOfWeek}
+     * Delete all time slots for authenticated doctor on a specific day
      */
     @DeleteMapping("/{dayOfWeek}")
     public ResponseEntity<Void> deleteDoctorTimeSlots(
-            @PathVariable Long doctorId,
-            @PathVariable DayOfWeek dayOfWeek) {
-        timeSlotsService.deleteDoctorTimeSlots(doctorId, dayOfWeek);
+            @PathVariable DayOfWeek dayOfWeek,
+            Authentication authentication) {
+        timeSlotsService.deleteDoctorTimeSlots(dayOfWeek, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 }
