@@ -1,8 +1,6 @@
 package ps.exalt.healthcare_appointment_system.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ps.exalt.healthcare_appointment_system.dto.request.AppointmentBookRequest;
@@ -39,23 +37,12 @@ public class AppointmentService {
 
     private static final Integer SLOT_DURATION = 30; // 30 minutes
 
-    private void validatePatientAccess(Long patientId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    public AppointmentResponse bookAppointment(AppointmentBookRequest request, String patientEmail) {
+        // Get patient from authenticated email
+        Patient patient = patientRepository.findByUserEmail(patientEmail)
+                .orElseThrow(() -> new NotFoundException("Patient not found"));
 
-        String authenticatedEmail = authentication.getName();
-
-        // verify the patient belongs to the authenticated user
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
-
-        if (!patient.getUser().getEmail().equals(authenticatedEmail)) {
-            throw new InvalidException("You can only manage your own appointments!");
-        }
-    }
-
-    public AppointmentResponse bookAppointment(Long patientId, AppointmentBookRequest request) {
-        // Validate patient access authorization
-        validatePatientAccess(patientId);
+        Long patientId = patient.getId();
 
         // Input validation
         if (patientId == null || patientId <= 0) {
@@ -96,10 +83,6 @@ public class AppointmentService {
         if (!selectedSlot.isAvailable()) {
             throw new InvalidException("Selected time slot is not available.");
         }
-
-        // Validate patient exists
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
 
         // Validate doctor exists and is active
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
@@ -145,9 +128,12 @@ public class AppointmentService {
         return convertToAppointmentResponse(savedAppointment);
     }
 
-    public void cancelAppointment(Long patientId, Long appointmentId) {
-        // Validate patient access authorization
-        validatePatientAccess(patientId);
+    public void cancelAppointment(Long appointmentId, String patientEmail) {
+        // Get patient from authenticated email
+        Patient patient = patientRepository.findByUserEmail(patientEmail)
+                .orElseThrow(() -> new NotFoundException("Patient not found"));
+
+        Long patientId = patient.getId();
 
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found with ID: " + appointmentId));
@@ -173,8 +159,14 @@ public class AppointmentService {
         appointmentRepository.save(appointment);
     }
 
-    public AppointmentResponse completeAppointment(Long doctorId, Long appointmentId,
-            AppointmentCompleteRequest request) {
+    public AppointmentResponse completeAppointment(Long appointmentId, AppointmentCompleteRequest request,
+            String doctorEmail) {
+        // Get doctor from authenticated email
+        Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                .orElseThrow(() -> new NotFoundException("Doctor not found"));
+
+        Long doctorId = doctor.getId();
+
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found with ID: " + appointmentId));
 
@@ -261,65 +253,57 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> getPatientAppointments(Long patientId) {
-        // Validate patient access authorization
-        validatePatientAccess(patientId);
+    public List<AppointmentResponse> getPatientAppointments(String patientEmail) {
+        // Get patient from authenticated email
+        Patient patient = patientRepository.findByUserEmail(patientEmail)
+                .orElseThrow(() -> new NotFoundException("Patient not found"));
 
-        // Validate patient exists
-        patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
-
-        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
+        List<Appointment> appointments = appointmentRepository.findByPatientId(patient.getId());
         return appointments.stream()
                 .map(this::convertToAppointmentResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> getDoctorAppointments(Long doctorId) {
-        // Validate doctor exists
-        doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+    public List<AppointmentResponse> getDoctorAppointments(String doctorEmail) {
+        // Get doctor from authenticated email
+        Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
-        List<Appointment> appointments = appointmentRepository.findByDoctorId(doctorId);
+        List<Appointment> appointments = appointmentRepository.findByDoctorId(doctor.getId());
         return appointments.stream()
                 .map(this::convertToAppointmentResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public AppointmentResponse getAppointmentById(Long appointmentId, String userEmail) {
+        // Try to find as patient first
+        Patient patient = patientRepository.findByUserEmail(userEmail)
+                .orElse(null);
+        if (patient != null) {
+            return getAppointmentByIdForPatient(appointmentId, patient.getId());
+        }
+
+        // If not a patient, must be a doctor
+        Doctor doctor = doctorRepository.findByUserEmail(userEmail)
+                .orElse(null);
+
+        return getAppointmentByIdForDoctor(appointmentId, doctor.getId());
     }
 
     @Transactional(readOnly = true)
     public AppointmentResponse getAppointmentByIdForPatient(Long appointmentId, Long patientId) {
-        // Validate patient access authorization
-        validatePatientAccess(patientId);
-
-        // Validate patient exists
-        patientRepository.findById(patientId)
-                .orElseThrow(() -> new NotFoundException("Patient not found with ID: " + patientId));
-
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found with ID: " + appointmentId));
-
-        // Check if the appointment belongs to the requesting patient
-        if (!appointment.getPatient().getId().equals(patientId)) {
-            throw new InvalidException("You can only view your own appointments.");
-        }
 
         return convertToAppointmentResponse(appointment);
     }
 
     @Transactional(readOnly = true)
     public AppointmentResponse getAppointmentByIdForDoctor(Long appointmentId, Long doctorId) {
-        // Validate doctor exists
-        doctorRepository.findById(doctorId)
-                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
-
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Appointment not found with ID: " + appointmentId));
-
-        // Check if the appointment belongs to the requesting doctor
-        if (!appointment.getDoctor().getId().equals(doctorId)) {
-            throw new InvalidException("You can only view your own appointments.");
-        }
 
         return convertToAppointmentResponse(appointment);
     }

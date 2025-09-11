@@ -63,7 +63,7 @@ public class SecurityConfig {
 
                                                 // Doctor endpoints -- Time slots management (doctors can manage their
                                                 // own schedules)
-                                                .requestMatchers("/api/doctors/*/time-slots/**")
+                                                .requestMatchers("/api/doctors/time-slots/**")
                                                 .hasAnyRole("DOCTOR")
 
                                                 // Admin endpoints -- Doctor management

@@ -1,8 +1,6 @@
 package ps.exalt.healthcare_appointment_system.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ps.exalt.healthcare_appointment_system.dto.request.DoctorMultipleTimeSlotsRequest;
@@ -29,20 +27,17 @@ public class DoctorWorkingTimeSlotsService {
         private final DoctorWorkingTimeSlotRepository timeSlotRepository;
         private final DoctorRepository doctorRepository;
 
-        public DoctorMultipleTimeSlotsResponse setDoctorTimeSlots(Long doctorId,
-                        DoctorMultipleTimeSlotsRequest request) {
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(doctorId);
-
-                // Validate doctor exists
-                Doctor doctor = doctorRepository.findById(doctorId)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+        public DoctorMultipleTimeSlotsResponse setDoctorTimeSlots(DoctorMultipleTimeSlotsRequest request,
+                        String doctorEmail) {
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
                 // Validate time slots
                 validateTimeSlots(request.getTimeSlots());
 
                 // Delete existing time slots for this day
-                timeSlotRepository.deleteByDoctorIdAndDayOfWeek(doctorId, request.getDayOfWeek());
+                timeSlotRepository.deleteByDoctorIdAndDayOfWeek(doctor.getId(), request.getDayOfWeek());
 
                 // Create new time slots
                 List<DoctorWorkingTimeSlot> timeSlots = new ArrayList<>();
@@ -60,24 +55,21 @@ public class DoctorWorkingTimeSlotsService {
                 // Save all time slots
                 List<DoctorWorkingTimeSlot> savedSlots = timeSlotRepository.saveAll(timeSlots);
 
-                return convertToResponse(doctorId, request.getDayOfWeek(), savedSlots);
+                return convertToResponse(doctor.getId(), request.getDayOfWeek(), savedSlots);
         }
 
-        public DoctorMultipleTimeSlotsResponse addTimeSlot(Long doctorId, DayOfWeek dayOfWeek,
-                        TimeSlotRequest slotRequest) {
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(doctorId);
-
-                // Validate doctor exists
-                Doctor doctor = doctorRepository.findById(doctorId)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+        public DoctorMultipleTimeSlotsResponse addTimeSlot(DayOfWeek dayOfWeek, TimeSlotRequest slotRequest,
+                        String doctorEmail) {
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
                 // Validate the new time slot
                 validateSingleTimeSlot(slotRequest);
 
                 // Check for overlapping slots
                 List<DoctorWorkingTimeSlot> overlapping = timeSlotRepository.findOverlappingSlots(
-                                doctorId, dayOfWeek, slotRequest.getStartTime(), slotRequest.getEndTime());
+                                doctor.getId(), dayOfWeek, slotRequest.getStartTime(), slotRequest.getEndTime());
 
                 if (!overlapping.isEmpty()) {
                         throw new InvalidException(
@@ -98,41 +90,35 @@ public class DoctorWorkingTimeSlotsService {
                 timeSlotRepository.save(timeSlot);
 
                 // Return all slots for this day
-                return getDoctorTimeSlots(doctorId, dayOfWeek);
+                return getDoctorTimeSlots(dayOfWeek, doctorEmail);
         }
 
         @Transactional(readOnly = true)
-        public DoctorMultipleTimeSlotsResponse getDoctorTimeSlots(Long doctorId, DayOfWeek dayOfWeek) {
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(doctorId);
-
-                // Validate doctor exists
-                doctorRepository.findById(doctorId)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+        public DoctorMultipleTimeSlotsResponse getDoctorTimeSlots(DayOfWeek dayOfWeek, String doctorEmail) {
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
                 List<DoctorWorkingTimeSlot> timeSlots = timeSlotRepository
-                                .findByDoctorIdAndDayOfWeekOrderByStartTime(doctorId, dayOfWeek);
+                                .findByDoctorIdAndDayOfWeekOrderByStartTime(doctor.getId(), dayOfWeek);
 
-                return convertToResponse(doctorId, dayOfWeek, timeSlots);
+                return convertToResponse(doctor.getId(), dayOfWeek, timeSlots);
         }
 
         @Transactional(readOnly = true)
-        public List<DoctorMultipleTimeSlotsResponse> getAllDoctorTimeSlots(Long doctorId) {
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(doctorId);
-
-                // Validate doctor exists
-                doctorRepository.findById(doctorId)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+        public List<DoctorMultipleTimeSlotsResponse> getAllDoctorTimeSlots(String doctorEmail) {
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
                 List<DoctorWorkingTimeSlot> allSlots = timeSlotRepository
-                                .findByDoctorIdOrderByDayOfWeekAscStartTimeAsc(doctorId);
+                                .findByDoctorIdOrderByDayOfWeekAscStartTimeAsc(doctor.getId());
 
                 // Group by day of week
                 return allSlots.stream()
                                 .collect(Collectors.groupingBy(DoctorWorkingTimeSlot::getDayOfWeek))
                                 .entrySet().stream()
-                                .map(entry -> convertToResponse(doctorId, entry.getKey(), entry.getValue()))
+                                .map(entry -> convertToResponse(doctor.getId(), entry.getKey(), entry.getValue()))
                                 .sorted(Comparator.comparing(DoctorMultipleTimeSlotsResponse::getDayOfWeek))
                                 .collect(Collectors.toList());
         }
@@ -141,53 +127,47 @@ public class DoctorWorkingTimeSlotsService {
          * Get only active time slots for a doctor on a specific day
          */
         @Transactional(readOnly = true)
-        public DoctorMultipleTimeSlotsResponse getActiveDoctorTimeSlots(Long doctorId, DayOfWeek dayOfWeek) {
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(doctorId);
-
-                // Validate doctor exists
-                doctorRepository.findById(doctorId)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+        public DoctorMultipleTimeSlotsResponse getActiveDoctorTimeSlots(DayOfWeek dayOfWeek, String doctorEmail) {
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
                 List<DoctorWorkingTimeSlot> activeSlots = timeSlotRepository
-                                .findByDoctorIdAndDayOfWeekAndIsActiveTrueOrderByStartTime(doctorId, dayOfWeek);
+                                .findByDoctorIdAndDayOfWeekAndIsActiveTrueOrderByStartTime(doctor.getId(), dayOfWeek);
 
-                return convertToResponse(doctorId, dayOfWeek, activeSlots);
+                return convertToResponse(doctor.getId(), dayOfWeek, activeSlots);
         }
 
-        /**
-         * Get all active time slots for a doctor (all days)
-         */
         @Transactional(readOnly = true)
-        public List<DoctorMultipleTimeSlotsResponse> getAllActiveDoctorTimeSlots(Long doctorId) {
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(doctorId);
-
-                // Validate doctor exists
-                doctorRepository.findById(doctorId)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
+        public List<DoctorMultipleTimeSlotsResponse> getAllActiveDoctorTimeSlots(String doctorEmail) {
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
                 List<DoctorWorkingTimeSlot> activeSlots = timeSlotRepository
-                                .findByDoctorIdAndIsActiveTrueOrderByDayOfWeekAscStartTimeAsc(doctorId);
+                                .findByDoctorIdAndIsActiveTrueOrderByDayOfWeekAscStartTimeAsc(doctor.getId());
 
                 // Group by day of week
                 return activeSlots.stream()
                                 .collect(Collectors.groupingBy(DoctorWorkingTimeSlot::getDayOfWeek))
                                 .entrySet().stream()
-                                .map(entry -> convertToResponse(doctorId, entry.getKey(), entry.getValue()))
+                                .map(entry -> convertToResponse(doctor.getId(), entry.getKey(), entry.getValue()))
                                 .sorted(Comparator.comparing(DoctorMultipleTimeSlotsResponse::getDayOfWeek))
                                 .collect(Collectors.toList());
         }
 
-        /**
-         * Delete a specific time slot
-         */
-        public void deleteTimeSlot(Long slotId) {
+        public void deleteTimeSlot(Long slotId, String doctorEmail) {
                 DoctorWorkingTimeSlot slot = timeSlotRepository.findById(slotId)
                                 .orElseThrow(() -> new NotFoundException("Time slot not found with ID: " + slotId));
 
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(slot.getDoctor().getId());
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
+
+                // Verify this time slot belongs to the authenticated doctor
+                if (!slot.getDoctor().getId().equals(doctor.getId())) {
+                        throw new InvalidException("You can only delete your own time slots");
+                }
 
                 timeSlotRepository.delete(slot);
         }
@@ -195,26 +175,26 @@ public class DoctorWorkingTimeSlotsService {
         /**
          * Delete all time slots for a doctor on a specific day
          */
-        public void deleteDoctorTimeSlots(Long doctorId, DayOfWeek dayOfWeek) {
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(doctorId);
+        public void deleteDoctorTimeSlots(DayOfWeek dayOfWeek, String doctorEmail) {
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
 
-                // Validate doctor exists
-                doctorRepository.findById(doctorId)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found with ID: " + doctorId));
-
-                timeSlotRepository.deleteByDoctorIdAndDayOfWeek(doctorId, dayOfWeek);
+                timeSlotRepository.deleteByDoctorIdAndDayOfWeek(doctor.getId(), dayOfWeek);
         }
 
-        /**
-         * Update a specific time slot
-         */
-        public TimeSlotResponse updateTimeSlot(Long slotId, TimeSlotRequest request) {
+        public TimeSlotResponse updateTimeSlot(Long slotId, TimeSlotRequest request, String doctorEmail) {
                 DoctorWorkingTimeSlot slot = timeSlotRepository.findById(slotId)
                                 .orElseThrow(() -> new NotFoundException("Time slot not found with ID: " + slotId));
 
-                // Validate doctor access (doctors can only manage their own time slots)
-                validateDoctorAccess(slot.getDoctor().getId());
+                // Get doctor from authenticated email
+                Doctor doctor = doctorRepository.findByUserEmail(doctorEmail)
+                                .orElseThrow(() -> new NotFoundException("Doctor not found"));
+
+                // Verify this time slot belongs to the authenticated doctor
+                if (!slot.getDoctor().getId().equals(doctor.getId())) {
+                        throw new InvalidException("You can only update your own time slots");
+                }
 
                 // Validate the updated time slot
                 validateSingleTimeSlot(request);
@@ -297,23 +277,5 @@ public class DoctorWorkingTimeSlotsService {
                                 .endTime(slot.getEndTime())
                                 .isActive(slot.getIsActive())
                                 .build();
-        }
-
-        /**
-         * Check if the authenticated doctor can access the requested doctor's time
-         * slots
-         * Doctors can only manage their own time slots
-         */
-        private void validateDoctorAccess(Long requestedDoctorId) {
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                String authenticatedEmail = authentication.getName();
-
-                // For DOCTOR role, check if they're accessing their own slots
-                Doctor authenticatedDoctor = doctorRepository.findByUserEmail(authenticatedEmail)
-                                .orElseThrow(() -> new NotFoundException("Doctor not found for authenticated user"));
-
-                if (!authenticatedDoctor.getId().equals(requestedDoctorId)) {
-                        throw new InvalidException("You can only manage your own time slots");
-                }
         }
 }
