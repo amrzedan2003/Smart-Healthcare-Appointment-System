@@ -66,6 +66,22 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/doctors/time-slots/**")
                                                 .hasAnyRole("DOCTOR")
 
+                                                // Prescription endpoints -- Doctors create prescriptions
+                                                .requestMatchers("/api/prescriptions").hasRole("DOCTOR")
+
+                                                // Prescription endpoints -- Doctors view their own prescriptions
+                                                .requestMatchers("/api/prescriptions/doctor/my-prescriptions")
+                                                .hasRole("DOCTOR")
+
+                                                // Prescription endpoints -- Patients view their own prescriptions
+                                                .requestMatchers("/api/prescriptions/my-records")
+                                                .hasRole("PATIENT")
+
+                                                // Prescription endpoints -- Both doctors and patients can view specific
+                                                // prescriptions
+                                                .requestMatchers("/api/prescriptions/*")
+                                                .hasAnyRole("DOCTOR", "PATIENT")
+
                                                 // Admin endpoints -- Doctor management
                                                 .requestMatchers("/api/doctors/**").hasRole("ADMIN")
                                                 .requestMatchers("/api/patients/**").hasRole("ADMIN")
