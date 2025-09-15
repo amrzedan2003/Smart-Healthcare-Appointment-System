@@ -73,8 +73,9 @@ public class AppointmentController {
      * GET /api/appointments/patient/my-appointments
      */
     @GetMapping("/patient/my-appointments")
-    public ResponseEntity<List<AppointmentResponse>> getPatientAppointments(Authentication authentication) {
-        List<AppointmentResponse> appointments = appointmentService.getPatientAppointments(authentication.getName());
+    public ResponseEntity<List<AppointmentResponse>> getPatientAppointments() {
+        List<AppointmentResponse> appointments = appointmentService
+                .getPatientAppointments();
         return ResponseEntity.ok(appointments);
     }
 
