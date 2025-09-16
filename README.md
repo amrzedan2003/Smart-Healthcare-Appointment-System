@@ -26,12 +26,22 @@ A web-based healthcare management platform for appointment scheduling, patient m
 
 ### Prerequisites
 
-- Java 24+
+- Java 21+
 - Maven 3.6+
 - PostgreSQL 12+
+- MongoDB 5+
 - Git
 
-### Setup
+### Docker Setup
+
+The easiest way to run the application is using Docker:
+
+#### Prerequisites for Docker
+
+- Docker
+- Docker Compose
+
+#### Quick Start with Docker
 
 1. **Clone the repository**
 
@@ -40,34 +50,52 @@ A web-based healthcare management platform for appointment scheduling, patient m
    cd Smart-Healthcare-Appointment-System
    ```
 
-2. **Setup Database**
-
-   ```sql
-   CREATE DATABASE healthcare_db;
-   CREATE USER postgres WITH PASSWORD '123456';
-   GRANT ALL PRIVILEGES ON DATABASE healthcare_db TO postgres;
-   ```
-
-3. **Update Configuration**
-
-   Edit `src/main/resources/application.properties`:
-
-   ```properties
-   spring.datasource.url=jdbc:postgresql://localhost:5432/healthcare_db
-   spring.datasource.username=your_username
-   spring.datasource.password=your_password
-   ```
-
-4. **Run Application**
+2. **Start all services**
 
    ```bash
-   mvn clean install
-   mvn spring-boot:run
+   docker-compose up -d
    ```
 
-5. **Access Application**
+   This will:
+
+   - Build the Spring Boot application
+   - Start PostgreSQL database
+   - Start MongoDB database
+   - Start the healthcare application
+
+3. **Access the application**
 
    Open: `http://localhost:8080`
+
+#### Docker Commands
+
+- **Start all services**: `docker-compose up -d`
+- **Stop all services**: `docker-compose down`
+- **View logs**: `docker-compose logs -f backend`
+- **Rebuild and start**: `docker-compose up --build -d`
+- **Remove volumes (fresh start)**: `docker-compose down -v`
+
+## Docker Architecture
+
+The application uses the following Docker services:
+
+- **backend**: Spring Boot application (Port 8080)
+- **postgres**: PostgreSQL database (Port 5432)
+- **mongodb**: MongoDB database (Port 27017)
+
+All services communicate through a custom Docker network called `healthcare-network`.
+
+## Environment Variables
+
+The application uses the following environment variables (defined in `.env`):
+
+- `POSTGRES_DB`: PostgreSQL database name
+- `POSTGRES_USER`: PostgreSQL username
+- `POSTGRES_PASSWORD`: PostgreSQL password
+- `MONGODB_DATABASE`: MongoDB database name
+- `JWT_SECRET`: JWT token secret key
+- `JWT_EXPIRATION`: JWT token expiration time
+- `SERVER_PORT`: Application server port
 
 ## API Endpoints
 
