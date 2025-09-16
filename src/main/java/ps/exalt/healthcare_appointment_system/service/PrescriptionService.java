@@ -12,7 +12,7 @@ import ps.exalt.healthcare_appointment_system.exception.NotFoundException;
 import ps.exalt.healthcare_appointment_system.repository.jpa.AppointmentRepository;
 import ps.exalt.healthcare_appointment_system.repository.jpa.DoctorRepository;
 import ps.exalt.healthcare_appointment_system.repository.jpa.PatientRepository;
-import ps.exalt.healthcare_appointment_system.repository.PrescriptionRepository;
+import ps.exalt.healthcare_appointment_system.repository.mongodb.PrescriptionRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;

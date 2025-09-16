@@ -1,4 +1,4 @@
-package ps.exalt.healthcare_appointment_system.repository;
+package ps.exalt.healthcare_appointment_system.repository.mongodb;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
