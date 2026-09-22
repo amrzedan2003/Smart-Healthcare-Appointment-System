@@ -50,7 +50,15 @@ The easiest way to run the application is using Docker:
    cd Smart-Healthcare-Appointment-System
    ```
 
-2. **Start all services**
+2. **Create your environment file**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Then set `POSTGRES_PASSWORD` and `JWT_SECRET` in `.env` (the secret needs at least 32 characters, e.g. `openssl rand -hex 32`). `.env` is git-ignored, so your values stay local.
+
+3. **Start all services**
 
    ```bash
    docker-compose up -d
@@ -63,7 +71,7 @@ The easiest way to run the application is using Docker:
    - Start MongoDB database
    - Start the healthcare application
 
-3. **Access the application**
+4. **Access the application**
 
    Open: `http://localhost:8080`
 
@@ -87,7 +95,7 @@ All services communicate through a custom Docker network called `healthcare-netw
 
 ## Environment Variables
 
-The application uses the following environment variables (defined in `.env`):
+The application uses the following environment variables (defined in `.env`; see `.env.example` for the template):
 
 - `POSTGRES_DB`: PostgreSQL database name
 - `POSTGRES_USER`: PostgreSQL username
