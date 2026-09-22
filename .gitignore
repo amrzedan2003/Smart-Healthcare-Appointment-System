@@ -33,3 +33,6 @@ build/
 .vscode/
 *.pdf
 *.md
+
+### Environment ###
+.env
